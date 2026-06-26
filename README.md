@@ -1,84 +1,132 @@
 # Transit Balance — Abu Dhabi Bus Demand vs. Allocation
 
-Prototype for the Cursor × eVoost Abu Dhabi AI PropTech Challenge (Future Communities track).
+> Where do Abu Dhabi's buses **not** match demand — and how should service be rebalanced?
 
-**Problem:** Which Abu Dhabi bus stops/routes are *under-served* (high travel demand, few buses)
-and which are *over-served* — and how should allocation be rebalanced? No public per-stop
-ridership exists, so we **estimate demand** from real population + real trip generators and
-compare it against the city's **current allocation** (GTFS service frequency).
+Built for the **Cursor × eVoost Abu Dhabi AI PropTech Challenge** (Future Communities / Decision Intelligence).
 
-## Data sources
+Abu Dhabi publishes its bus network (GTFS) but **no per-stop ridership**. So Transit Balance
+**estimates demand five different ways**, lets you switch between them live, and — crucially —
+**calibrates and scores every model against the only public revealed-demand data that exists:
+real Abu Dhabi Link on-demand ride totals.**
 
-All real except the synthetic baseline (kept only to show it does *not* work).
+![Overview](docs/img/overview.png)
 
-| Source | What it provides | Resolution | License / attribution |
-|---|---|---|---|
-| **ITC Abu Dhabi GTFS** (DMT, via transitpdf/busmaps mirror) | Network: 135 routes, 3,368 stops, 27,926 trips. `trips/stop` = current allocation | stop-level | DMT/ITC, 2022 feed; attribute ITC Abu Dhabi |
-| **WorldPop 2025 100m** | Modeled population grid (demand origins) | ~100 m | CC-BY 4.0 — © WorldPop, Univ. of Southampton, DOI:10.5258/SOTON/WP00803 |
-| **Meta HRSL 2020** (general / children<5 / youth15-24) | High-res population + age bands | ~30 m | CC-BY — © Meta Data for Good / CIESIN Columbia |
-| **OSM amenities** (from starter kit) | Trip generators (schools, malls, clinics…) — demand destinations | point | © OpenStreetMap contributors, ODbL |
-| **Synthetic listings / communities** (starter kit) | Baseline only | district | MIT (synthetic) |
+---
 
-## How to reproduce
+## What it does
+
+An interactive map of the whole Abu Dhabi bus network where every route and stop is colored by
+its **service gap** = `demand percentile − supply percentile`:
+
+- 🔴 **red = under-served** (high demand, low frequency → add buses)
+- 🔵 **blue = over-served** (low demand, high frequency → redeploy)
+
+Click any route or stop for its **Link-calibrated annual demand**, demand vs. supply percentiles,
+and a concrete **trips/day recommendation**.
+
+| Route detail (Network centrality model) | Mobile |
+|---|---|
+| ![Route detail](docs/img/route-detail.png) | ![Mobile](docs/img/mobile.png) |
+
+## The idea: don't trust one demand model — compare five
+
+Because demand can't be measured directly, the app ships **five independent estimators** and a
+dropdown to switch between them. Each is principled and standalone (none is fitted to the answer):
+
+| Model | What it captures | Basis |
+|---|---|---|
+| **Residents** | trip origins | WorldPop population within 500 m of each stop |
+| **Destinations** | trip attraction | OSM trip generators (schools, malls, clinics…) within 500 m |
+| **Gravity** | accessibility | Σ reachable activity with distance decay (≤ 2.5 km) |
+| **Network centrality** | structural through-traffic | Betweenness on the bus-stop graph — *land-use independent* |
+| **Composite** | ensemble | mean percentile of the four above |
+
+## The differentiator: a real-data reality check
+
+Abu Dhabi **Link** is the on-demand feeder that runs *where fixed buses are thin*, so its public
+zone-level ride totals are a genuine **revealed-demand proxy**. The app:
+
+1. **Validates** each model against real 2023 Link rides (Spearman/Pearson rank correlation), and
+2. **Calibrates** demand to those rides via least-squares, so route/stop demand is reported in
+   **real Link-anchored annual rides**, not an abstract index.
+
+![Reality check](docs/img/reality-check.png)
+
+**Result — out-of-sample fit vs. real Link rides:**
+
+| Model | Rank corr |
+|---|---|
+| **Network centrality** | **+0.95** ✓ best |
+| Residents | +0.63 |
+| Composite | +0.63 |
+| Gravity | +0.63 |
+| Destinations | +0.32 |
+
+> **Finding:** a structural, land-use-independent signal (where a stop sits in the network)
+> predicts Abu Dhabi demand far better than who lives or what's built nearby.
+
+Real Link ride totals used as anchors (2023): Al Shahama 146k · Yas Island 84k ·
+Khalifa City 84k · Saadiyat 53k (367k total). Sources: ITC 2022 release; AD Media Office 2023.
+
+## Run locally
 
 ```bash
 pip install -r requirements.txt
-python3 scripts/download_data.py           # 1. pull all sources -> data/raw/
-python3 scripts/compare_demand_sources.py  # 2. (optional) demand-source quality comparison
-python3 scripts/build_model.py             # 3. demand model + gap engine -> webapp/data/*.geojson
-python3 scripts/ai_brief.py                # 4. per-route AI briefings -> webapp/data/briefs.json
-python3 -m http.server 8765 -d webapp      # 5. open http://localhost:8765
+
+python3 scripts/download_data.py           # 1. pull real sources -> data/raw/ (GTFS, WorldPop, HRSL)
+python3 scripts/build_model.py             # 2. demand models + Link calibration -> webapp/data/*
+python3 -m http.server 8765 -d webapp      # 3. open http://localhost:8765
 ```
 
-Set `OPENAI_API_KEY` before step 4 to generate LLM briefings (otherwise a grounded
-template is used, so the demo runs with no keys).
+The committed `webapp/data/` is precomputed, so you can skip straight to step 3 to see the demo.
+`scripts/compare_demand_sources.py` (optional) reproduces the demand-source quality comparison;
+`scripts/ai_brief.py` (optional, needs `OPENAI_API_KEY`) adds per-route LLM briefings.
 
-## The app
+## Deploy (static — Cloudflare Pages)
 
-Interactive map of Abu Dhabi's bus network:
-- **Routes view** — every route colored by *service gap* (red = under-served, blue = over-served),
-  line weight ∝ |gap|. Click a route for demand vs. supply, a concrete trips/day recommendation,
-  estimated annual boardings, and an AI reallocation briefing.
-- **Stops view** — 1,688 stops sized by demand, colored by gap; click for catchment detail
-  (residents, trip generators, and weekly trips within 500 m).
-- Ranked "most under-served / over-served" lists in the sidebar.
+The app is **100% static** (Leaflet + precomputed GeoJSON/JSON, all relative paths). No backend,
+no build step.
 
-It's a static site (Leaflet + precomputed GeoJSON), so it deploys as-is to Vercel, Netlify,
-GitHub Pages, or Hugging Face Spaces — just publish the `webapp/` folder.
+```bash
+npx wrangler pages deploy webapp --project-name transit-balance
+```
 
-## Method (how demand is modeled)
+Or via the Cloudflare dashboard (Git integration):
+**Build command:** *(empty)* · **Build output directory:** `webapp` · **Framework preset:** None.
 
-For each stop we sum **real population** (WorldPop, origins) and **weighted trip generators**
-(OSM amenities, destinations) within a 500 m walking catchment, percentile-rank both, and blend
-them into a demand index. Routes inherit the mean demand of the stops they serve (this avoids
-the interchange-inflation problem that hits raw stop-level trip counts). The **gap** is the
-demand percentile minus the supply percentile (GTFS trips). Demand share is calibrated to ITC's
-published 95.2M annual boardings (2024) for the per-route estimates.
+Works identically on Vercel / Netlify / GitHub Pages — just publish `webapp/`.
 
-## Demand-source quality comparison (500 m catchment around 1,688 AD-metro stops)
+## Data sources
 
-Anchor = correlation of each demand signal vs. **current bus allocation** (GTFS trips/stop).
-A good proxy should agree with where the city already runs buses.
+| Source | What it provides | License / attribution |
+|---|---|---|
+| **ITC Abu Dhabi GTFS** (DMT) | Network: routes, stops, trips. `trips/stop` = current allocation | © ITC Abu Dhabi (DMT) |
+| **Abu Dhabi Link ride totals** (2022–23) | Real on-demand ridership by zone — revealed-demand anchor | ITC / AD Media Office (public) |
+| **WorldPop 2025 100m** | Modeled population grid (demand origins) | CC-BY 4.0 © WorldPop, Univ. of Southampton |
+| **Meta HRSL 2020** | High-res population + age bands | CC-BY © Meta Data for Good / CIESIN |
+| **OSM amenities** | Trip generators (demand destinations) | © OpenStreetMap contributors, ODbL |
 
-| Source | Coverage | Granularity (distinct values) | Corr vs current allocation |
-|---|---|---|---|
-| **OSM trip generators** | 88% | 227 | **+0.56 (best)** |
-| HRSL children / youth / general | 100% | 618 | +0.33 (all identical — age bands are scaled copies, redundant) |
-| Listings (synthetic) | 56% | 51 | +0.33 |
-| **WorldPop 2025** | 100% | 1,686 (finest) | +0.31 |
-| Synthetic `service_demand_index` | 100% | 20 (district only) | **−0.06 (no signal / negative)** |
+## How the gap is computed
 
-**Conclusions**
-- **OSM trip generators** is the strongest single demand proxy and the most decision-relevant
-  (it explains *why* people travel). Use it as the destination/attraction term.
-- **WorldPop** has the best spatial resolution (near-unique per stop) and 100% coverage — use it
-  as the population/origin term. HRSL agrees (r≈0.63) but its age bands are perfectly collinear
-  (r=1.00), so they add no independent signal; WorldPop is the cleaner primary.
-- The **synthetic** kit demand index is *negatively* correlated with real allocation — confirming
-  the pivot to real data. Kept only as a baseline foil.
-- → Model: **gravity demand = WorldPop population (origins) × OSM generators (destinations)**,
-  compared to GTFS allocation, calibrated to ITC's published ~95M trips/yr.
+For every stop, each model produces a demand score; we percentile-rank it and subtract the
+percentile of GTFS service frequency (supply). Routes aggregate the **sum** of their stops'
+calibrated demand (so total ridership potential, not an average that penalizes long routes).
+A route's recommended trips/day scales its current frequency toward the network-median load.
 
-**Known caveat:** raw `trips/stop` overstates demand at interchanges (many routes pass through),
-so naive "over-served" flags catch hubs like Khaleej Al Arabi Interchange. Route-level
-normalization is the next refinement.
+## Caveats & next steps
+
+- Calibration is anchored on only **4 zones / annual totals**, so it nails the high-demand
+  mainland zones (Shahama, Khalifa City) but **underweights the two islands** (few stops).
+- Demand is **modeled**, not measured fixed-bus ridership — directional, not operational truth.
+- **Next:** a formal aggregated **hourly + origin-destination** dataset via ITC / Bayanat / SCAD
+  would let the same validation/calibration harness add **time-of-day and day-of-week** demand and
+  tighten the island estimates dramatically.
+
+## Project layout
+
+```
+webapp/            static site (deploy this) — index.html, app.js, style.css, data/
+scripts/           build pipeline — download_data, build_model, compare_demand_sources, ai_brief
+data/raw/          downloaded sources (gitignored; regenerate via download_data.py)
+docs/img/          screenshots
+```

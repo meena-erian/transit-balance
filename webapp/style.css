@@ -46,6 +46,7 @@ html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Seg
 .routelist li{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;cursor:pointer;transition:.12s}
 .routelist li:hover{border-color:var(--acc)}
 .routelist .rid{font-weight:700}
+.routelist .sub{color:var(--mut);font-size:11px}
 .routelist .delta{font-size:12px;font-weight:700}
 .routelist .delta.add{color:var(--add)} .routelist .delta.cut{color:var(--cut)}
 

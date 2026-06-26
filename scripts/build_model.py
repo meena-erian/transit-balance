@@ -131,37 +131,47 @@ def main():
     stops["supply_pct"] = pct_rank(stops["supply_trips"])
     stops["gap"] = stops["demand_pct"] - stops["supply_pct"]
 
-    # ---- ROUTE LEVEL (handles interchange inflation) ----
+    # ---- ROUTE LEVEL ----
+    # Demand for a route = TOTAL potential ridership it connects = sum of per-stop demand
+    # over its unique stops (captures both corridor richness AND length/coverage), NOT the
+    # average (which let tiny downtown routes outrank long trunk routes). Supply = how often
+    # a bus runs (daily trips). The actionable signal is LOAD = demand per trip (crowding):
+    # high load -> add buses, low load -> redeploy. Everything below derives from this one
+    # quantity so the columns stay coherent.
     print("Aggregating to routes...")
-    # stops per route (distinct)
     route_stops = st_route.merge(
         stops[["stop_id", "demand_index"]], on="stop_id", how="inner"
     ).drop_duplicates(["route_id", "stop_id"])
-    route_demand = route_stops.groupby("route_id")["demand_index"].mean()  # avg corridor demand
+    route_demand_sum = route_stops.groupby("route_id")["demand_index"].sum()   # total potential
+    route_demand_mean = route_stops.groupby("route_id")["demand_index"].mean()  # corridor intensity
     route_nstops = route_stops.groupby("route_id")["stop_id"].nunique()
 
-    # supply per route: total feed trips + typical weekday daily trips
     route_trips_total = trips.groupby("route_id").size()
     route_trips_daily = trips_typ.groupby("route_id").size()
 
     rt = routes[["route_id", "route_short_name", "route_long_name", "route_type"]].copy()
-    rt["demand_corridor"] = rt.route_id.map(route_demand)
+    rt["demand_total"] = rt.route_id.map(route_demand_sum)
+    rt["demand_corridor"] = rt.route_id.map(route_demand_mean)
     rt["n_stops_metro"] = rt.route_id.map(route_nstops).fillna(0)
     rt["trips_total"] = rt.route_id.map(route_trips_total).fillna(0)
     rt["daily_trips"] = rt.route_id.map(route_trips_daily).fillna(0)
-    rt = rt[rt["n_stops_metro"] >= 3].copy()  # routes meaningfully in the metro
+    rt = rt[(rt["n_stops_metro"] >= 3) & (rt["daily_trips"] >= 1)].copy()
 
-    rt["demand_pct"] = pct_rank(rt["demand_corridor"])
-    rt["supply_pct"] = pct_rank(rt["daily_trips"].replace(0, np.nan)).fillna(0)
-    rt["gap"] = rt["demand_pct"] - rt["supply_pct"]
+    # Calibrated estimated annual boardings (route's share of ITC's 95.2M total).
+    rt["est_annual_trips"] = (rt["demand_total"] / rt["demand_total"].sum()
+                              * ITC_ANNUAL_TRIPS_2024).round(0)
+    # Load = estimated boardings per scheduled trip (the crowding proxy).
+    rt["boardings_per_trip"] = rt["est_annual_trips"] / (rt["daily_trips"] * 365.0)
 
-    # Calibrated estimated annual boardings (demand share of ITC total).
-    share = rt["demand_corridor"] * rt["n_stops_metro"]
-    rt["est_annual_trips"] = (share / share.sum() * ITC_ANNUAL_TRIPS_2024).round(0)
+    # Demand / supply / gap all coherent: demand_pct ranks total ridership, supply_pct ranks
+    # frequency, gap = their difference (so it tracks load).
+    rt["demand_pct"] = pct_rank(rt["demand_total"])
+    rt["supply_pct"] = pct_rank(rt["daily_trips"])
+    rt["gap"] = (rt["demand_pct"] - rt["supply_pct"]).round(1)
 
-    # Recommendation: scale daily trips toward demand/supply balance.
-    ratio = (rt["demand_pct"] + 1) / (rt["supply_pct"] + 1)
-    rt["rec_factor"] = ratio.clip(0.6, 1.8)
+    # Recommendation: move each route's load toward the network median load.
+    median_load = rt["boardings_per_trip"].median()
+    rt["rec_factor"] = (rt["boardings_per_trip"] / median_load).clip(0.6, 1.8)
     rt["rec_daily_trips"] = (rt["daily_trips"] * rt["rec_factor"]).round(0)
     rt["rec_delta"] = rt["rec_daily_trips"] - rt["daily_trips"]
 
@@ -202,6 +212,7 @@ def main():
                 "rec_daily_trips": int(r.rec_daily_trips),
                 "rec_delta": int(r.rec_delta),
                 "est_annual_trips": int(r.est_annual_trips),
+                "boardings_per_trip": round(float(r.boardings_per_trip), 0),
                 "n_stops": int(r.n_stops_metro),
                 "action": r.action,
             },
@@ -241,6 +252,19 @@ def main():
             "rec_daily_trips": int(r.rec_daily_trips), "rec_delta": int(r.rec_delta),
             "est_annual_trips": int(r.est_annual_trips), "demand_pct": round(float(r.demand_pct), 1),
             "supply_pct": round(float(r.supply_pct), 1),
+            "boardings_per_trip": round(float(r.boardings_per_trip), 0),
+        }
+
+    # top under/over-served STOPS (so the Stops view list can update too)
+    su = stops.sort_values("gap", ascending=False).head(10)
+    so = stops.sort_values("gap").head(10)
+
+    def stop_row(s):
+        return {
+            "stop_id": s.stop_id, "name": (s.stop_name if pd.notna(s.stop_name) else "(unnamed stop)"),
+            "gap": round(float(s.gap), 1), "demand_pct": round(float(s.demand_pct), 1),
+            "supply_pct": round(float(s.supply_pct), 1), "supply_trips": int(s.supply_trips),
+            "pop_catch": int(s.pop_catch), "lat": float(s.stop_lat), "lon": float(s.stop_lon),
         }
 
     summary = {
@@ -259,6 +283,8 @@ def main():
         "buses_to_cut_daily_trips": int(-rt.loc[rt.rec_delta < 0, "rec_delta"].sum()),
         "top_underserved": [route_row(r) for _, r in under.iterrows()],
         "top_overserved": [route_row(r) for _, r in over.iterrows()],
+        "top_underserved_stops": [stop_row(s) for _, s in su.iterrows()],
+        "top_overserved_stops": [stop_row(s) for _, s in so.iterrows()],
     }
     (OUT / "summary.json").write_text(json.dumps(summary, indent=2))
 

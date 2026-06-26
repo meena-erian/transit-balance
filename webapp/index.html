@@ -18,6 +18,9 @@
       <section id="kpis" class="kpis"></section>
 
       <section class="controls">
+        <label class="mlabel" for="method">Demand model</label>
+        <select id="method" class="method"></select>
+        <p class="hint" id="method-hint"></p>
         <div class="seg" id="layer-toggle">
           <button data-layer="routes" class="active">Routes</button>
           <button data-layer="stops">Stops</button>
@@ -34,19 +37,23 @@
         <ul id="list-over" class="routelist"></ul>
       </section>
 
+      <section id="reality" class="reality"></section>
+
       <footer>
         <p>GTFS © ITC Abu Dhabi (DMT) · Population © WorldPop (CC-BY) · Amenities © OpenStreetMap (ODbL)</p>
-        <p>Demand is <strong>modeled</strong> (population × trip generators), not measured ridership. Calibrated to ITC's 95.2M trips (2024).</p>
+        <p>Demand is <strong>modeled</strong> (five methods, switch above) and <strong>calibrated to real Abu Dhabi Link ride totals</strong> (2023). Shown in Link-anchored annual rides, not measured fixed-bus ridership.</p>
       </footer>
     </aside>
 
-    <main id="map"></main>
+    <button id="panel-toggle" class="panel-toggle" aria-label="Toggle panel">Map ↕</button>
 
-    <div id="legend" class="legend">
-      <span class="ttl">Service gap</span>
-      <div class="bar"></div>
-      <div class="ends"><span>over-served</span><span>balanced</span><span>under-served</span></div>
-    </div>
+    <main id="map">
+      <div id="legend" class="legend">
+        <span class="ttl">Service gap</span>
+        <div class="bar"></div>
+        <div class="ends"><span>over-served</span><span>balanced</span><span>under-served</span></div>
+      </div>
+    </main>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

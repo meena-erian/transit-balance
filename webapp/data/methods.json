@@ -1,0 +1,38 @@
+{
+  "methods": [
+    {
+      "key": "residents",
+      "label": "Residents (origins)",
+      "desc": "WorldPop population within 500 m of the stop \u2014 where trips begin."
+    },
+    {
+      "key": "destinations",
+      "label": "Destinations (attraction)",
+      "desc": "OSM trip generators (schools, malls, clinics\u2026) within 500 m \u2014 where people go."
+    },
+    {
+      "key": "gravity",
+      "label": "Gravity accessibility",
+      "desc": "Sum of reachable activity with distance decay (\u2264 2.5 km) \u2014 how much a stop can reach."
+    },
+    {
+      "key": "centrality",
+      "label": "Network centrality",
+      "desc": "Betweenness on the bus network \u2014 structural through-traffic, independent of land use."
+    },
+    {
+      "key": "composite",
+      "label": "Composite (ensemble)",
+      "desc": "Average percentile of the other four methods."
+    }
+  ],
+  "meta": {
+    "gtfs": "ITC Abu Dhabi (DMT) \u2014 135 routes / 3,368 stops",
+    "population": "WorldPop 2025 100m (CC-BY)",
+    "generators": "OpenStreetMap amenities (ODbL)",
+    "calibration": "Demand calibrated to real Abu Dhabi Link ride totals (2023, 4 zones)",
+    "n_stops": 1688,
+    "n_routes": 74,
+    "catchment_m": 500.0
+  }
+}

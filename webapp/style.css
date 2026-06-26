@@ -23,6 +23,10 @@ html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Seg
 .seg button{flex:1;background:transparent;border:0;color:var(--mut);padding:9px;font-size:13px;font-weight:600;cursor:pointer}
 .seg button.active{background:var(--acc);color:#06121f}
 .hint{font-size:12px;color:var(--mut);margin:8px 2px 0}
+.mlabel{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 2px 5px}
+.method{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:2px}
+.method:focus{outline:1px solid var(--acc)}
+#method-hint{margin:6px 2px 12px;min-height:30px}
 
 .detail{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
 .detail.hidden{display:none}
@@ -50,11 +54,30 @@ html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Seg
 .routelist .delta{font-size:12px;font-weight:700}
 .routelist .delta.add{color:var(--add)} .routelist .delta.cut{color:var(--cut)}
 
+/* reality check (Abu Dhabi Link validation) */
+.reality h3{font-size:13px;margin:2px 0 6px;display:flex;align-items:center;gap:8px}
+.fitline{font-size:12.5px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin:8px 0;line-height:1.5}
+.fitline.good{border-color:rgba(245,196,81,.6);background:rgba(245,196,81,.1)}
+.fitline b{color:var(--txt)}
+.zrow{display:grid;grid-template-columns:74px 1fr auto;align-items:center;gap:8px;font-size:12px;padding:4px 0}
+.zn{color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zbars{position:relative;height:14px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.zbars i{position:absolute;left:0;height:7px;border-radius:3px;display:block}
+.zbars i.obs{top:0;background:#f5c451}
+.zbars i.prd{bottom:0;background:var(--acc)}
+.zv{font-variant-numeric:tabular-nums;color:var(--mut);font-size:11px}
+.keys{font-size:11px;color:var(--mut);margin:2px 0 0;display:flex;gap:12px}
+.keys i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.keys .obs{background:#f5c451} .keys .prd{background:var(--acc)}
+.zone-label{color:#f5c451;font-size:11px;font-weight:700;text-align:center;text-shadow:0 1px 3px #000,0 0 6px #000;line-height:1.2;pointer-events:none;white-space:nowrap}
+
 footer{margin-top:auto;font-size:10.5px;color:var(--mut);line-height:1.5}
 
 /* map */
-#map{flex:1;height:100%}
+#map{flex:1;height:100%;position:relative}
 .leaflet-container{background:#0b0f14}
+
+.panel-toggle{display:none}
 
 .legend{position:absolute;bottom:22px;right:18px;z-index:600;background:rgba(17,22,29,.92);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:220px}
 .legend .ttl{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
@@ -66,3 +89,38 @@ footer{margin-top:auto;font-size:10.5px;color:var(--mut);line-height:1.5}
 .leaflet-popup-tip{background:var(--panel2)}
 .leaflet-popup-content{font-size:13px}
 .leaflet-popup-content b{color:var(--acc)}
+
+/* ---------- mobile ---------- */
+@media (max-width:760px){
+  #app{flex-direction:column;height:100vh;height:100dvh}
+  #map{order:-1;flex:none;width:100%;height:48vh;height:48dvh}
+  #sidebar{width:100%;min-width:0;flex:1;border-right:0;border-top:1px solid var(--line);
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom));gap:14px;
+    -webkit-overflow-scrolling:touch}
+  #sidebar header h1{font-size:20px}
+
+  .legend{bottom:12px;right:12px;width:170px;padding:8px 10px}
+  .legend .bar{height:6px}
+
+  /* floating button to give the map (or panel) more room */
+  .panel-toggle{display:block;position:absolute;top:12px;right:12px;z-index:700;
+    background:var(--acc);color:#06121f;border:0;border-radius:20px;
+    padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+    box-shadow:0 2px 10px rgba(0,0,0,.4)}
+
+  /* collapsed = full-screen map, panel shrinks to a peek */
+  #app.panel-collapsed #map{height:calc(100dvh - 64px)}
+  #app.panel-collapsed #sidebar{flex:none;height:64px;overflow:hidden}
+}
+
+@media (max-width:380px){
+  .kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .kpi .n{font-size:19px}
+}
+
+/* larger touch targets on coarse pointers */
+@media (pointer:coarse){
+  .seg button{padding:12px}
+  .method{padding:12px 10px}
+  .routelist li{padding:11px 12px}
+}

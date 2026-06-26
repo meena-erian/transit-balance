@@ -1,0 +1,239 @@
+{
+  "city": "Abu Dhabi",
+  "generated_from": {
+    "gtfs": "ITC Abu Dhabi (DMT), 135 routes / 3,368 stops",
+    "population": "WorldPop 2025 100m (CC-BY)",
+    "generators": "OpenStreetMap amenities (ODbL)",
+    "calibration": "ITC 2024 annual bus trips = 95,200,000"
+  },
+  "n_stops_metro": 1688,
+  "n_routes_metro": 74,
+  "n_underserved": 15,
+  "n_overserved": 12,
+  "buses_to_add_daily_trips": 696,
+  "buses_to_cut_daily_trips": 786,
+  "top_underserved": [
+    {
+      "route": "45",
+      "headsign": "",
+      "gap": 81.1,
+      "daily_trips": 31,
+      "rec_daily_trips": 56,
+      "rec_delta": 25,
+      "est_annual_trips": 147824,
+      "demand_pct": 95.9,
+      "supply_pct": 14.9
+    },
+    {
+      "route": "21",
+      "headsign": "",
+      "gap": 54.7,
+      "daily_trips": 38,
+      "rec_daily_trips": 68,
+      "rec_delta": 30,
+      "est_annual_trips": 2452887,
+      "demand_pct": 82.4,
+      "supply_pct": 27.7
+    },
+    {
+      "route": "X90",
+      "headsign": "",
+      "gap": 49.3,
+      "daily_trips": 18,
+      "rec_daily_trips": 32,
+      "rec_delta": 14,
+      "est_annual_trips": 72657,
+      "demand_pct": 56.8,
+      "supply_pct": 7.4
+    },
+    {
+      "route": "23",
+      "headsign": "",
+      "gap": 39.9,
+      "daily_trips": 48,
+      "rec_daily_trips": 86,
+      "rec_delta": 38,
+      "est_annual_trips": 2589275,
+      "demand_pct": 75.7,
+      "supply_pct": 35.8
+    },
+    {
+      "route": "120",
+      "headsign": "",
+      "gap": 39.9,
+      "daily_trips": 18,
+      "rec_daily_trips": 32,
+      "rec_delta": 14,
+      "est_annual_trips": 834305,
+      "demand_pct": 47.3,
+      "supply_pct": 7.4
+    },
+    {
+      "route": "121",
+      "headsign": "",
+      "gap": 38.5,
+      "daily_trips": 18,
+      "rec_daily_trips": 32,
+      "rec_delta": 14,
+      "est_annual_trips": 818009,
+      "demand_pct": 45.9,
+      "supply_pct": 7.4
+    },
+    {
+      "route": "A2",
+      "headsign": "",
+      "gap": 32.4,
+      "daily_trips": 43,
+      "rec_daily_trips": 77,
+      "rec_delta": 34,
+      "est_annual_trips": 550467,
+      "demand_pct": 62.2,
+      "supply_pct": 29.7
+    },
+    {
+      "route": "26",
+      "headsign": "",
+      "gap": 32.4,
+      "daily_trips": 51,
+      "rec_daily_trips": 92,
+      "rec_delta": 41,
+      "est_annual_trips": 2017673,
+      "demand_pct": 70.3,
+      "supply_pct": 37.8
+    },
+    {
+      "route": "X4",
+      "headsign": "",
+      "gap": 31.8,
+      "daily_trips": 72,
+      "rec_daily_trips": 109,
+      "rec_delta": 37,
+      "est_annual_trips": 1060237,
+      "demand_pct": 93.2,
+      "supply_pct": 61.5
+    },
+    {
+      "route": "401",
+      "headsign": "",
+      "gap": 30.4,
+      "daily_trips": 36,
+      "rec_daily_trips": 65,
+      "rec_delta": 29,
+      "est_annual_trips": 944330,
+      "demand_pct": 52.7,
+      "supply_pct": 22.3
+    }
+  ],
+  "top_overserved": [
+    {
+      "route": "110",
+      "headsign": "",
+      "gap": -70.3,
+      "daily_trips": 139,
+      "rec_daily_trips": 83,
+      "rec_delta": -56,
+      "est_annual_trips": 618425,
+      "demand_pct": 25.7,
+      "supply_pct": 95.9
+    },
+    {
+      "route": "102",
+      "headsign": "",
+      "gap": -55.4,
+      "daily_trips": 143,
+      "rec_daily_trips": 86,
+      "rec_delta": -57,
+      "est_annual_trips": 1463150,
+      "demand_pct": 41.9,
+      "supply_pct": 97.3
+    },
+    {
+      "route": "111",
+      "headsign": "",
+      "gap": -54.1,
+      "daily_trips": 108,
+      "rec_daily_trips": 65,
+      "rec_delta": -43,
+      "est_annual_trips": 711185,
+      "demand_pct": 35.1,
+      "supply_pct": 89.2
+    },
+    {
+      "route": "410",
+      "headsign": "",
+      "gap": -53.4,
+      "daily_trips": 74,
+      "rec_daily_trips": 44,
+      "rec_delta": -30,
+      "est_annual_trips": 1704952,
+      "demand_pct": 16.2,
+      "supply_pct": 69.6
+    },
+    {
+      "route": "M2",
+      "headsign": "",
+      "gap": -46.6,
+      "daily_trips": 68,
+      "rec_daily_trips": 41,
+      "rec_delta": -27,
+      "est_annual_trips": 1180925,
+      "demand_pct": 4.1,
+      "supply_pct": 50.7
+    },
+    {
+      "route": "M4",
+      "headsign": "",
+      "gap": -39.9,
+      "daily_trips": 66,
+      "rec_daily_trips": 40,
+      "rec_delta": -26,
+      "est_annual_trips": 871611,
+      "demand_pct": 2.7,
+      "supply_pct": 42.6
+    },
+    {
+      "route": "M5",
+      "headsign": "",
+      "gap": -39.2,
+      "daily_trips": 67,
+      "rec_daily_trips": 40,
+      "rec_delta": -27,
+      "est_annual_trips": 937655,
+      "demand_pct": 6.8,
+      "supply_pct": 45.9
+    },
+    {
+      "route": "67",
+      "headsign": "",
+      "gap": -36.5,
+      "daily_trips": 209,
+      "rec_daily_trips": 133,
+      "rec_delta": -76,
+      "est_annual_trips": 1470172,
+      "demand_pct": 63.5,
+      "supply_pct": 100.0
+    },
+    {
+      "route": "63",
+      "headsign": "",
+      "gap": -36.5,
+      "daily_trips": 119,
+      "rec_daily_trips": 74,
+      "rec_delta": -45,
+      "est_annual_trips": 1416420,
+      "demand_pct": 58.1,
+      "supply_pct": 94.6
+    },
+    {
+      "route": "M1",
+      "headsign": "",
+      "gap": -36.5,
+      "daily_trips": 67,
+      "rec_daily_trips": 40,
+      "rec_delta": -27,
+      "est_annual_trips": 1197153,
+      "demand_pct": 9.5,
+      "supply_pct": 45.9
+    }
+  ]
+}

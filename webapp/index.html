@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transit Balance — Abu Dhabi bus demand vs. allocation</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <header>
+        <h1>Transit<span>Balance</span></h1>
+        <p class="tag">Where Abu Dhabi's buses don't match demand</p>
+      </header>
+
+      <section id="kpis" class="kpis"></section>
+
+      <section class="controls">
+        <div class="seg" id="layer-toggle">
+          <button data-layer="routes" class="active">Routes</button>
+          <button data-layer="stops">Stops</button>
+        </div>
+        <p class="hint" id="layer-hint">Lines colored by service gap. Red = under-served, blue = over-served.</p>
+      </section>
+
+      <section id="detail" class="detail hidden"></section>
+
+      <section class="lists">
+        <h3>Most under-served <span class="pill add">add buses</span></h3>
+        <ul id="list-under" class="routelist"></ul>
+        <h3>Most over-served <span class="pill cut">redeploy</span></h3>
+        <ul id="list-over" class="routelist"></ul>
+      </section>
+
+      <footer>
+        <p>GTFS © ITC Abu Dhabi (DMT) · Population © WorldPop (CC-BY) · Amenities © OpenStreetMap (ODbL)</p>
+        <p>Demand is <strong>modeled</strong> (population × trip generators), not measured ridership. Calibrated to ITC's 95.2M trips (2024).</p>
+      </footer>
+    </aside>
+
+    <main id="map"></main>
+
+    <div id="legend" class="legend">
+      <span class="ttl">Service gap</span>
+      <div class="bar"></div>
+      <div class="ends"><span>over-served</span><span>balanced</span><span>under-served</span></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

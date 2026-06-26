@@ -1,0 +1,15 @@
+# Raw data (large; regenerate via scripts/download_data.py)
+data/raw/
+data/processed/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+
+# Keep the precomputed webapp data (needed for the static demo)
+!webapp/data/

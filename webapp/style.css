@@ -78,6 +78,7 @@ footer{margin-top:auto;font-size:10.5px;color:var(--mut);line-height:1.5}
 .leaflet-container{background:#0b0f14}
 
 .panel-toggle{display:none}
+.toast{display:none}
 
 .legend{position:absolute;bottom:22px;right:18px;z-index:600;background:rgba(17,22,29,.92);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:220px}
 .legend .ttl{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
@@ -93,24 +94,39 @@ footer{margin-top:auto;font-size:10.5px;color:var(--mut);line-height:1.5}
 /* ---------- mobile ---------- */
 @media (max-width:760px){
   #app{flex-direction:column;height:100vh;height:100dvh}
-  #map{order:-1;flex:none;width:100%;height:48vh;height:48dvh}
+  #map{order:-1;flex:none;width:100%;height:48vh;height:48dvh;transition:height .22s ease}
   #sidebar{width:100%;min-width:0;flex:1;border-right:0;border-top:1px solid var(--line);
     padding:14px 14px calc(14px + env(safe-area-inset-bottom));gap:14px;
     -webkit-overflow-scrolling:touch}
   #sidebar header h1{font-size:20px}
 
-  .legend{bottom:12px;right:12px;width:170px;padding:8px 10px}
+  .legend{bottom:12px;right:12px;width:150px;padding:7px 9px}
   .legend .bar{height:6px}
 
-  /* floating button to give the map (or panel) more room */
-  .panel-toggle{display:block;position:absolute;top:12px;right:12px;z-index:700;
-    background:var(--acc);color:#06121f;border:0;border-radius:20px;
-    padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
-    box-shadow:0 2px 10px rgba(0,0,0,.4)}
+  /* expand/collapse handle, bottom-left of the map (clears legend on the right) */
+  .panel-toggle{display:inline-flex;align-items:center;gap:6px;position:absolute;
+    left:10px;bottom:12px;z-index:700;background:var(--acc);color:#06121f;border:0;
+    border-radius:20px;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;
+    box-shadow:0 2px 10px rgba(0,0,0,.45)}
 
-  /* collapsed = full-screen map, panel shrinks to a peek */
-  #app.panel-collapsed #map{height:calc(100dvh - 64px)}
-  #app.panel-collapsed #sidebar{flex:none;height:64px;overflow:hidden}
+  /* recommendation toast over the map (smartphones only) */
+  .toast{position:absolute;top:10px;left:52px;right:10px;z-index:680;
+    flex-direction:column;gap:1px;background:rgba(17,22,29,.97);
+    border:1px solid var(--line);border-left-width:4px;border-radius:10px;
+    padding:8px 12px;box-shadow:0 6px 20px rgba(0,0,0,.55);cursor:pointer;
+    animation:toastIn .18s ease}
+  .toast.show{display:flex}
+  .toast.add{border-left-color:var(--add)}
+  .toast.cut{border-left-color:var(--cut)}
+  .toast.maintain{border-left-color:var(--bal)}
+  .toast .t-title{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+  .toast .t-rec{font-size:14px;font-weight:700;line-height:1.25}
+  .toast .t-hint{font-size:10px;color:var(--acc);margin-top:1px}
+  @keyframes toastIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+  /* collapsed = full-screen map (panel hidden); handle + toast bring it back */
+  #app.panel-collapsed #map{height:100dvh}
+  #app.panel-collapsed #sidebar{flex:none;height:0;padding:0;border:0;overflow:hidden}
 }
 
 @media (max-width:380px){

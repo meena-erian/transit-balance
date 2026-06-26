@@ -5,7 +5,7 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
 }).addTo(MAP);
 
 const state = {
-  layer: "routes", method: "composite", methods: [], meta: null,
+  layer: "routes", method: "centrality", methods: [], meta: null,
   routes: null, stops: null, zones: null, validation: null,
   routeById: {}, stopById: {}, routeFeat: [], stopFeat: [],
 };
@@ -85,6 +85,7 @@ function applyMethod() {
   renderReality();
   zonesToFront();
   document.getElementById("detail").classList.add("hidden");
+  hideToast();
 }
 
 function renderReality() {
@@ -195,6 +196,7 @@ function showLayer(name) {
     ? "Lines colored by service gap. Red = under-served, blue = over-served."
     : "Dots sized by demand, colored by gap. Click for catchment detail.";
   document.getElementById("detail").classList.add("hidden");
+  hideToast();
   if (name === "routes") { MAP.removeLayer(state.stops); state.routes.addTo(MAP); }
   else { MAP.removeLayer(state.routes); state.stops.addTo(MAP); }
   zonesToFront();
@@ -208,26 +210,49 @@ function selectRoute(name) {
   state.routes.setStyle(f => ({ ...routeStyle(f), opacity: f.properties.name === name ? 1 : 0.15 }));
   lyr.setStyle({ weight: 7, opacity: 1, color: "#fff" });
   lyr.bringToFront();
-  MAP.fitBounds(lyr.getBounds(), { padding: [60, 60], maxZoom: 13 });
-  renderRouteDetail(lyr.feature.properties);
+  const p = lyr.feature.properties;
+  renderRouteDetail(p);
+  if (isMobile()) {
+    setCollapsed(true);                       // focus the map
+    const r = routeRecInfo(p);
+    showToast(`Route ${p.name}`, r.headline, r.cls);
+  }
+  setTimeout(() => MAP.fitBounds(lyr.getBounds(), { padding: [60, 60], maxZoom: 13 }), isMobile() ? 80 : 0);
 }
 
 function selectStop(stopId) {
   if (state.layer !== "stops") showLayer("stops");
   const lyr = state.stopById[stopId];
   if (!lyr) return;
-  MAP.setView(lyr.getLatLng(), 15);
-  renderStopDetail(lyr.feature.properties);
+  const p = lyr.feature.properties;
+  renderStopDetail(p);
+  if (isMobile()) {
+    setCollapsed(true);
+    const g = G(p);
+    const cls = g > 25 ? "add" : g < -25 ? "cut" : "maintain";
+    const txt = g > 25 ? `Under-served · gap +${g}` : g < -25 ? `Over-served · gap ${g}` : `Balanced · gap ${g > 0 ? "+" : ""}${g}`;
+    showToast(p.name || "Bus stop", txt, cls);
+  }
+  setTimeout(() => MAP.setView(lyr.getLatLng(), 15), isMobile() ? 80 : 0);
+}
+
+/* recommendation summary for a route under the active method */
+function routeRecInfo(p) {
+  const dx = p[`rx_${state.method}`], recd = p[`rd_${state.method}`];
+  const add = dx > 0, cut = dx < 0;
+  const verb = add ? "Add service" : cut ? "Redeploy capacity" : "Maintain";
+  return {
+    dx, recd, add, cut, verb,
+    cls: add ? "add" : cut ? "cut" : "maintain",
+    headline: `${verb}: ${p.daily_trips} → ${recd} trips/day (${dx > 0 ? "+" : ""}${dx})`,
+  };
 }
 
 function renderRouteDetail(p) {
   const el = document.getElementById("detail");
   el.classList.remove("hidden");
-  const g = G(p), dx = p[`rx_${state.method}`];
-  const recd = p[`rd_${state.method}`], est = p[`e_${state.method}`];
-  const add = dx > 0, cut = dx < 0;
-  const recClass = add ? "add" : cut ? "cut" : "maintain";
-  const verb = add ? "Add service" : cut ? "Redeploy capacity" : "Maintain";
+  const g = G(p), est = p[`e_${state.method}`];
+  const r = routeRecInfo(p);
   el.innerHTML = `
     <div class="rname">Route ${p.name}</div>
     <div class="rsign">${p.headsign || "Abu Dhabi"} · model: ${methodLabel()}</div>
@@ -236,10 +261,10 @@ function renderRouteDetail(p) {
     <div class="row"><span>Supply percentile (frequency)</span><b>${p.supply_pct}</b></div>
     <div class="row"><span>Service gap</span><b style="color:${gapColor(g)}">${g > 0 ? "+" : ""}${g}</b></div>
     <div class="row"><span>Current daily trips</span><b>${p.daily_trips}</b></div>
-    <div class="rec ${recClass}">
-      <span class="big">${verb}: ${p.daily_trips} → ${recd} trips/day (${dx > 0 ? "+" : ""}${dx})</span>
-      ${add ? "Modeled demand outruns frequency — likely crowding, candidate for more buses." :
-         cut ? "Frequency outruns modeled demand — capacity can move to busier routes." :
+    <div class="rec ${r.cls}">
+      <span class="big">${r.headline}</span>
+      ${r.add ? "Modeled demand outruns frequency — likely crowding, candidate for more buses." :
+         r.cut ? "Frequency outruns modeled demand — capacity can move to busier routes." :
          "Demand and frequency are roughly balanced."}
     </div>
     <div class="brief"><span class="ai">Why this model</span><br/>${(state.methods.find(m => m.key === state.method) || {}).desc || ""}</div>`;
@@ -268,14 +293,32 @@ function renderStopDetail(p) {
 
 document.querySelectorAll("#layer-toggle button").forEach(b => { b.onclick = () => showLayer(b.dataset.layer); });
 
-/* mobile: collapse the panel to give the map full screen, and keep Leaflet sized right */
+/* ---------- mobile panel + toast ---------- */
+const isMobile = () => window.matchMedia("(max-width: 760px)").matches;
 const panelToggle = document.getElementById("panel-toggle");
-panelToggle.onclick = () => {
+const toastEl = document.getElementById("toast");
+
+function setCollapsed(collapsed) {
   const app = document.getElementById("app");
-  const collapsed = app.classList.toggle("panel-collapsed");
-  panelToggle.textContent = collapsed ? "Details ↕" : "Map ↕";
+  app.classList.toggle("panel-collapsed", collapsed);
+  panelToggle.innerHTML = collapsed ? "&#9650; Details" : "&#9660; Map";
+  if (!collapsed) {
+    hideToast();
+    const d = document.getElementById("detail");
+    if (!d.classList.contains("hidden")) setTimeout(() => d.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
+  }
   setTimeout(() => MAP.invalidateSize(), 60);
-};
+}
+
+function showToast(title, rec, cls) {
+  toastEl.className = `toast ${cls} show`;
+  toastEl.innerHTML = `<div class="t-title">${title}</div><div class="t-rec">${rec}</div><div class="t-hint">tap for details</div>`;
+}
+function hideToast() { toastEl.classList.remove("show"); }
+
+panelToggle.onclick = () => setCollapsed(!document.getElementById("app").classList.contains("panel-collapsed"));
+toastEl.onclick = () => setCollapsed(false);
+
 let rsz;
 window.addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => MAP.invalidateSize(), 150); });
 
